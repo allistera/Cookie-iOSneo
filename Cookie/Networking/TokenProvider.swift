@@ -7,3 +7,13 @@ struct TokenProvider: Sendable {
     /// Called when the server rejects a freshly renewed token.
     let invalidate: @Sendable () async -> Void
 }
+
+extension TokenProvider {
+    init(session: Session) {
+        self.init(
+            current: { try await session.accessToken() },
+            renewed: { try await session.renewAccessToken() },
+            invalidate: { await session.invalidate() }
+        )
+    }
+}

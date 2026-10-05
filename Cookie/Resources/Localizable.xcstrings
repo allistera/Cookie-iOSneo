@@ -1,7 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "Cookie" : {}
+    "Cookie" : {},
+    "Sign-in failed. Check your connection and try again." : {},
+    "Signed in, but your profile could not be read. Please try again." : {}
   },
   "version" : "1.0"
 }
