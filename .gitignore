@@ -1,0 +1,14 @@
+.DS_Store
+build/
+*.xcresult
+xcuserdata/
+Cookie/Info.plist
+
+Cookie.xcodeproj/*
+!Cookie.xcodeproj/project.xcworkspace/
+Cookie.xcodeproj/project.xcworkspace/*
+!Cookie.xcodeproj/project.xcworkspace/xcshareddata/
+Cookie.xcodeproj/project.xcworkspace/xcshareddata/*
+!Cookie.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+Cookie.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/*
+!Cookie.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
