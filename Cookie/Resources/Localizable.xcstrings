@@ -1,7 +1,15 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%lld unread" : {},
+    "Account" : {},
+    "Check your connection and try again." : {},
     "Cookie" : {},
+    "Email" : {},
+    "Mailbox unavailable" : {},
+    "Retry" : {},
+    "Sign in" : {},
+    "Sign out" : {},
     "Sign-in failed. Check your connection and try again." : {},
     "Signed in, but your profile could not be read. Please try again." : {}
   },
