@@ -53,6 +53,13 @@ targets:
           - CFBundleTypeRole: Editor
             CFBundleURLSchemes:
               - $(PRODUCT_BUNDLE_IDENTIFIER)
+  CookieTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: CookieTests
+    dependencies:
+      - target: Cookie
 schemes:
   Cookie:
     build:
@@ -60,5 +67,9 @@ schemes:
         Cookie: all
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - CookieTests
     archive:
       config: Release
