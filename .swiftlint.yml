@@ -1,0 +1,7 @@
+strict: true
+opt_in_rules:
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+line_length: 120
+trailing_comma:
+  mandatory_comma: true

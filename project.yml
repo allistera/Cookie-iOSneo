@@ -1,0 +1,64 @@
+name: Cookie
+options:
+  bundleIdPrefix: com.cookie
+  deploymentTarget:
+    iOS: "27.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+    ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+packages:
+  Auth0:
+    url: https://github.com/auth0/Auth0.swift
+    exactVersion: 3.1.0
+targets:
+  Cookie:
+    type: application
+    platform: iOS
+    sources:
+      - path: Cookie
+        excludes:
+          - Info.plist
+    dependencies:
+      - package: Auth0
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.cookie.ios
+        PRODUCT_NAME: Cookie
+        DEVELOPMENT_TEAM: 88SL72L38P
+    info:
+      path: Cookie/Info.plist
+      properties:
+        CFBundleDisplayName: Cookie
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UIAppFonts:
+          - Figtree-Regular.ttf
+          - Figtree-SemiBold.ttf
+          - Figtree-Bold.ttf
+          - JetBrainsMono-Medium.ttf
+        CFBundleURLTypes:
+          - CFBundleTypeRole: Editor
+            CFBundleURLSchemes:
+              - $(PRODUCT_BUNDLE_IDENTIFIER)
+schemes:
+  Cookie:
+    build:
+      targets:
+        Cookie: all
+    run:
+      config: Debug
+    archive:
+      config: Release
