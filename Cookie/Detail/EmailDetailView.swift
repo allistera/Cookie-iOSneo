@@ -6,8 +6,8 @@ struct EmailDetailView: View {
     @State private var bodyHeight: CGFloat = 44
     @FocusState private var replyFocused: Bool
 
-    init(email: EmailSummary, client: APIClient, inbox: Inbox) {
-        _detail = State(initialValue: EmailDetail(email: email, client: client, inbox: inbox))
+    init(email: EmailSummary, client: APIClient, mailbox: Mailbox) {
+        _detail = State(initialValue: EmailDetail(email: email, client: client, mailbox: mailbox))
     }
 
     private var email: EmailSummary { detail.email }
@@ -171,7 +171,7 @@ struct EmailDetailView: View {
             return (Data(#"{"id":"1","body_html":\#(html),"body_text":\#(text)}"#.utf8), response)
         }
         return NavigationStack {
-            EmailDetailView(email: InboxPreviewData.emails[0], client: client, inbox: Inbox(client: client))
+            EmailDetailView(email: InboxPreviewData.emails[0], client: client, mailbox: Mailbox(client: client))
         }
     }
 

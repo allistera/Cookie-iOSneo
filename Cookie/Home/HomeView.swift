@@ -7,25 +7,25 @@ struct HomeView: View {
     let client: APIClient
     let signOut: () async -> Void
 
-    @State private var inbox: Inbox
+    @State private var mailbox: Mailbox
 
     init(profile: UserProfile, client: APIClient, signOut: @escaping () async -> Void) {
         self.profile = profile
         self.client = client
         self.signOut = signOut
-        _inbox = State(initialValue: Inbox(client: client))
+        _mailbox = State(initialValue: Mailbox(client: client))
     }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 header
-                InboxView(inbox: inbox)
+                MailboxView(mailbox: mailbox)
             }
             .background(Color(.surface))
             .toolbarVisibility(.hidden, for: .navigationBar)
             .navigationDestination(for: EmailSummary.self) { email in
-                EmailDetailView(email: email, client: client, inbox: inbox)
+                EmailDetailView(email: email, client: client, mailbox: mailbox)
             }
         }
     }

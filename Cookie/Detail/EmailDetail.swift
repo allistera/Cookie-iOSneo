@@ -27,15 +27,15 @@ final class EmailDetail {
     private(set) var showsRemoteImages = false
 
     private let client: APIClient
-    private let inbox: Inbox
+    private let mailbox: Mailbox
     private var draft: ReplyDraft?
     private var hasMarkedRead = false
     private static let logger = Logger(subsystem: "com.cookie.ios", category: "detail")
 
-    init(email: EmailSummary, client: APIClient, inbox: Inbox) {
+    init(email: EmailSummary, client: APIClient, mailbox: Mailbox) {
         self.email = email
         self.client = client
-        self.inbox = inbox
+        self.mailbox = mailbox
     }
 
     /// Fetches the body and, on first open of an unread email, marks it read.
@@ -43,7 +43,7 @@ final class EmailDetail {
         body = .loading
         let needsMarkRead = !hasMarkedRead && email.isUnread
         hasMarkedRead = true
-        if needsMarkRead { inbox.markRead(email.id) }
+        if needsMarkRead { mailbox.markRead(email.id) }
         do {
             async let fetched: MessageBody = client.get(CookieAPIEndpoints.message(id: email.id))
             if needsMarkRead { await markRead() }
@@ -60,10 +60,10 @@ final class EmailDetail {
             let _: EmptyResponse = try await client.patch(
                 CookieAPIEndpoints.messages, body: MarkReadRequest(id: email.id, isUnread: false))
         } catch is CancellationError {
-            inbox.markUnread(email.id)
+            mailbox.markUnread(email.id)
         } catch {
             Self.logger.error("Mark read failed: \(String(describing: type(of: error)), privacy: .public)")
-            inbox.markUnread(email.id)
+            mailbox.markUnread(email.id)
         }
     }
 

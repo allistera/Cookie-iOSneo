@@ -1,17 +1,20 @@
 import Foundation
 import Observation
 
-/// The loaded inbox: rows, categories and the paging cursor.
+/// The loaded mailbox: rows, categories and the paging cursor.
 @MainActor
 @Observable
-final class Inbox {
+final class Mailbox {
     enum Phase: Equatable {
         case loading
         case loaded
         case failed
     }
 
+    private(set) var folder: MailboxFolder = .inbox
     private(set) var phase: Phase = .loading
+    /// The inbox's unread count from the first page of any folder.
+    private(set) var unreadCount = 0
     private(set) var emails: [EmailSummary] = []
     private(set) var categories: [EmailCategory] = []
     private(set) var nextCursor: String?
@@ -29,24 +32,44 @@ final class Inbox {
         self.client = client
     }
 
+    /// The inbox is sorted into category tabs; any other folder is one page.
     var tabs: [InboxTab] {
-        InboxTab.tabs(for: emails, categories: categories)
+        if folder == .inbox {
+            return InboxTab.tabs(for: emails, categories: categories)
+        }
+        return [InboxTab(id: "folder", name: folder.title, isImportant: false, emails: emails)]
     }
 
-    /// Reloads the first page and the categories together.
+    /// Switches folder, dropping the previous folder's rows, and loads it.
+    func select(_ folder: MailboxFolder) async {
+        guard folder != self.folder else { return }
+        self.folder = folder
+        emails = []
+        categories = []
+        nextCursor = nil
+        loadMoreFailed = false
+        refreshFailed = false
+        phase = .loading
+        await refresh()
+    }
+
+    /// Reloads the first page, with the categories for the inbox.
     func refresh() async {
         generation += 1
         let current = generation
+        let folder = self.folder
         refreshFailed = false
         if emails.isEmpty { phase = .loading }
         do {
-            async let page: InboxPage = client.get(CookieAPIEndpoints.inbox(before: nil))
-            async let list: CategoryList = client.get(CookieAPIEndpoints.categories)
-            let (loadedPage, loadedList) = try await (page, list)
-            guard current == generation else { return }
+            async let page: InboxPage = client.get(CookieAPIEndpoints.mailbox(folder: folder, before: nil))
+            let loadedList: CategoryList? =
+                folder == .inbox ? try await client.get(CookieAPIEndpoints.categories) : nil
+            let loadedPage = try await page
+            guard current == generation, folder == self.folder else { return }
             emails = loadedPage.emails
-            categories = loadedList.categories
+            categories = loadedList?.categories ?? []
             nextCursor = loadedPage.nextCursor
+            if let unread = loadedPage.unreadCount { unreadCount = unread }
             loadMoreFailed = false
             phase = .loaded
         } catch is CancellationError {
@@ -69,7 +92,7 @@ final class Inbox {
         let current = generation
         defer { isLoadingMore = false }
         do {
-            let page: InboxPage = try await client.get(CookieAPIEndpoints.inbox(before: cursor))
+            let page: InboxPage = try await client.get(CookieAPIEndpoints.mailbox(folder: folder, before: cursor))
             guard current == generation else { return }
             let known = Set(emails.map(\.id))
             emails += page.emails.filter { !known.contains($0.id) }
