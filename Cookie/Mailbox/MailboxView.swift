@@ -1,16 +1,16 @@
 import SwiftUI
 
-/// The inbox: category tabs over swipeable pages of rows.
-struct InboxView: View {
-    let inbox: Inbox
+/// The mailbox: category tabs over swipeable pages of rows.
+struct MailboxView: View {
+    let mailbox: Mailbox
     @State private var selection = InboxTab.importantID
 
     var body: some View {
         content
             .task {
-                await inbox.refresh()
+                await mailbox.refresh()
             }
-            .onChange(of: inbox.tabs.map(\.id)) { _, ids in
+            .onChange(of: mailbox.tabs.map(\.id)) { _, ids in
                 if !ids.contains(selection), let first = ids.first {
                     selection = first
                 }
@@ -18,28 +18,28 @@ struct InboxView: View {
     }
 
     @ViewBuilder private var content: some View {
-        switch inbox.phase {
+        switch mailbox.phase {
         case .loading:
             ProgressView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .failed:
             ContentUnavailableView {
-                Label("Inbox unavailable", systemImage: "wifi.exclamationmark")
+                Label("Mailbox unavailable", systemImage: "wifi.exclamationmark")
             } description: {
                 Text("Check your connection and try again.")
             } actions: {
                 Button("Retry") {
-                    Task { await inbox.refresh() }
+                    Task { await mailbox.refresh() }
                 }
                 .buttonStyle(.borderedProminent)
             }
         case .loaded:
-            let tabs = inbox.tabs
+            let tabs = mailbox.tabs
             VStack(spacing: 0) {
                 InboxTabStrip(tabs: tabs, selection: $selection)
                 TabView(selection: $selection) {
                     ForEach(tabs) { tab in
-                        InboxPageView(tab: tab, inbox: inbox)
+                        InboxPageView(tab: tab, mailbox: mailbox)
                             .tag(tab.id)
                     }
                 }
@@ -51,10 +51,10 @@ struct InboxView: View {
 
 #if DEBUG
     #Preview("Populated") {
-        InboxView(inbox: Inbox(client: InboxPreviewData.client(emailsStatus: 200)))
+        MailboxView(mailbox: Mailbox(client: InboxPreviewData.client(emailsStatus: 200)))
     }
 
     #Preview("Failed") {
-        InboxView(inbox: Inbox(client: InboxPreviewData.client(emailsStatus: 500)))
+        MailboxView(mailbox: Mailbox(client: InboxPreviewData.client(emailsStatus: 500)))
     }
 #endif

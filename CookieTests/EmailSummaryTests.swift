@@ -64,4 +64,32 @@ struct EmailSummaryTests {
             try JSONDecoder.cookieAPI().decode(EmailSummary.self, from: Data(json.utf8))
         }
     }
+
+    @Test func sentRowShowsRecipient() throws {
+        let json = """
+            {"id":"1","from_address":"me@example.com","from_name":"Me","sent_at":"2026-10-05T09:48:12Z",
+            "is_unread":false,"labels":[],"is_sent":true,
+            "recipients":{"to":[{"name":"Jordan Blake","address":"jordan@example.com"}],"cc":[]}}
+            """
+        let email = try JSONDecoder.cookieAPI().decode(EmailSummary.self, from: Data(json.utf8))
+        #expect(email.isSent)
+        #expect(email.displayName == "To: Jordan Blake")
+    }
+
+    @Test func sentRowWithoutNameUsesAddressAndMissingFieldsDefault() throws {
+        let sent = """
+            {"id":"1","from_address":"me@example.com","sent_at":"2026-10-05T09:48:12Z","is_unread":false,
+            "labels":[],"is_sent":true,"recipients":{"to":[{"name":null,"address":"jordan@example.com"}]}}
+            """
+        let email = try JSONDecoder.cookieAPI().decode(EmailSummary.self, from: Data(sent.utf8))
+        #expect(email.displayName == "To: jordan@example.com")
+
+        let received = """
+            {"id":"2","from_address":"a@example.com","sent_at":"2026-10-05T09:48:12Z","is_unread":false,"labels":[],
+            "recipients":null}
+            """
+        let other = try JSONDecoder.cookieAPI().decode(EmailSummary.self, from: Data(received.utf8))
+        #expect(!other.isSent)
+        #expect(other.displayName == "a@example.com")
+    }
 }

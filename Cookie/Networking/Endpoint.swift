@@ -31,9 +31,12 @@ enum CookieAPIEndpoints {
             queryItems: [URLQueryItem(name: "id", value: id), URLQueryItem(name: "calendar", value: "deferred")])
     }
 
-    /// The inbox, newest first. `cursor` is the previous page's `nextCursor`.
-    static func inbox(before cursor: String?, limit: Int = 50) -> Endpoint {
-        var items = [URLQueryItem(name: "folder", value: "inbox"), URLQueryItem(name: "limit", value: String(limit))]
+    static let labels = Endpoint(host: "labels-api.infinitywave.online", path: "/labels")
+    static let drafts = Endpoint(host: "drafts-api.infinitywave.online", path: "/drafts")
+
+    /// One folder's rows, newest first. `cursor` is the previous page's `nextCursor`.
+    static func mailbox(folder: MailboxFolder, before cursor: String?, limit: Int = 50) -> Endpoint {
+        var items = folder.queryItems + [URLQueryItem(name: "limit", value: String(limit))]
         if let cursor {
             items.append(URLQueryItem(name: "before", value: cursor))
         }

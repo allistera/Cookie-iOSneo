@@ -1,6 +1,6 @@
 import Foundation
 
-/// One category page of the inbox. The rule mirrors Cookie-Web's
+/// One category page of the mailbox. The rule mirrors Cookie-Web's
 /// TraditionalInboxView: Important first, then every category in server
 /// order, then Other; each email appears in exactly one tab.
 struct InboxTab: Identifiable, Equatable {

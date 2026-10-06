@@ -28,7 +28,7 @@ private func inboxJSON(unread: Bool) -> String {
 @MainActor
 private func makeDetail(
     bodyStatus: Int = 200, patchStatus: Int = 200, sendStatus: Int = 200, recorder: Recorder, unread: Bool = true
-) async throws -> (EmailDetail, Inbox) {
+) async throws -> (EmailDetail, Mailbox) {
     let tokens = TokenProvider(current: { "t" }, renewed: { "t" }, invalidate: {})
     let client = APIClient(tokens: tokens) { request in
         await recorder.record(request)
@@ -46,10 +46,10 @@ private func makeDetail(
         }
         return (Data(body.utf8), response)
     }
-    let inbox = Inbox(client: client)
-    await inbox.refresh()
-    let email = try #require(inbox.emails.first)
-    return (EmailDetail(email: email, client: client, inbox: inbox), inbox)
+    let mailbox = Mailbox(client: client)
+    await mailbox.refresh()
+    let email = try #require(mailbox.emails.first)
+    return (EmailDetail(email: email, client: client, mailbox: mailbox), mailbox)
 }
 
 private func json(_ data: Data) throws -> [String: Any] {
@@ -60,12 +60,12 @@ private func json(_ data: Data) throws -> [String: Any] {
 struct EmailDetailTests {
     @Test func loadsBodyAndMarksRead() async throws {
         let recorder = Recorder()
-        let (detail, inbox) = try await makeDetail(recorder: recorder)
+        let (detail, mailbox) = try await makeDetail(recorder: recorder)
 
         await detail.load()
 
         #expect(detail.body == .loaded(MessageBody(id: "6f1c", bodyHtml: "<p>Hi</p>", bodyText: "Hi")))
-        #expect(inbox.emails.first?.isUnread == false)
+        #expect(mailbox.emails.first?.isUnread == false)
         let patch = try json(#require(await recorder.bodies(for: "PATCH").first))
         #expect(patch["id"] as? String == "6f1c")
         #expect(patch["is_unread"] as? Bool == false)
@@ -80,9 +80,9 @@ struct EmailDetailTests {
 
     @Test func failedMarkReadRestoresUnread() async throws {
         let recorder = Recorder()
-        let (detail, inbox) = try await makeDetail(patchStatus: 500, recorder: recorder)
+        let (detail, mailbox) = try await makeDetail(patchStatus: 500, recorder: recorder)
         await detail.load()
-        #expect(inbox.emails.first?.isUnread == true)
+        #expect(mailbox.emails.first?.isUnread == true)
     }
 
     @Test func bodyFailureIsReported() async throws {

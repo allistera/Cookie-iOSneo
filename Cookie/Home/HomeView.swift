@@ -1,48 +1,86 @@
 import SwiftUI
 
-/// The signed-in screen: the design's header over the inbox, with email
-/// detail pushed on a native navigation stack.
+/// The signed-in screen: the design's header over the selected folder or
+/// Drafts, with email detail on a native navigation stack and the sidebar
+/// drawer around everything.
 struct HomeView: View {
     let profile: UserProfile
     let client: APIClient
     let signOut: () async -> Void
 
-    @State private var inbox: Inbox
+    @State private var mailbox: Mailbox
+    @State private var sidebar: SidebarModel
+    @AccessibilityFocusState private var headerButtonFocused: Bool
 
     init(profile: UserProfile, client: APIClient, signOut: @escaping () async -> Void) {
         self.profile = profile
         self.client = client
         self.signOut = signOut
-        _inbox = State(initialValue: Inbox(client: client))
+        _mailbox = State(initialValue: Mailbox(client: client))
+        _sidebar = State(initialValue: SidebarModel(client: client))
     }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                header
-                InboxView(inbox: inbox)
+        DrawerContainer(isOpen: $sidebar.isOpen) {
+            SidebarView(sidebar: sidebar, unreadCount: mailbox.unreadCount) { selection in
+                select(selection)
             }
-            .background(Color(.surface))
-            .toolbarVisibility(.hidden, for: .navigationBar)
-            .navigationDestination(for: EmailSummary.self) { email in
-                EmailDetailView(email: email, client: client, inbox: inbox)
+        } content: {
+            NavigationStack {
+                VStack(spacing: 0) {
+                    header
+                    switch sidebar.selection {
+                    case .folder:
+                        MailboxView(mailbox: mailbox)
+                    case .drafts:
+                        DraftsView(sidebar: sidebar)
+                    }
+                }
+                .background(Color(.surface))
+                .toolbarVisibility(.hidden, for: .navigationBar)
+                .navigationDestination(for: EmailSummary.self) { email in
+                    EmailDetailView(email: email, client: client, mailbox: mailbox)
+                }
             }
+        }
+        .onChange(of: sidebar.isOpen) { _, open in
+            if !open { headerButtonFocused = true }
+        }
+    }
+
+    private func select(_ selection: SidebarSelection) {
+        sidebar.select(selection)
+        if case .folder(let folder) = selection {
+            Task { await mailbox.select(folder) }
         }
     }
 
     private var header: some View {
         HStack(spacing: 10) {
-            Image(.logo)
-                .resizable()
-                .frame(width: 34, height: 34)
-                .clipShape(.rect(cornerRadius: 9))
-                .accessibilityHidden(true)
-            Text("Cookie")
-                .font(CookieFont.text(.bold, size: 21, relativeTo: .title3))
-                .foregroundStyle(Color(.primaryText))
-            Text("Email")
-                .font(CookieFont.text(.regular, size: 21, relativeTo: .title3))
-                .foregroundStyle(Color(.secondaryText))
+            Button {
+                sidebar.open()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(.logo)
+                        .resizable()
+                        .frame(width: 34, height: 34)
+                        .clipShape(.rect(cornerRadius: 9))
+                    Text("Cookie")
+                        .font(CookieFont.text(.bold, size: 21, relativeTo: .title3))
+                        .foregroundStyle(Color(.primaryText))
+                    Text("Email")
+                        .font(CookieFont.text(.regular, size: 21, relativeTo: .title3))
+                        .foregroundStyle(Color(.secondaryText))
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(Color(.secondaryText))
+                }
+                .frame(minHeight: 44)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Open sidebar")
+            .accessibilityValue(sidebar.isOpen ? Text("Expanded") : Text("Collapsed"))
+            .accessibilityFocused($headerButtonFocused)
             Spacer()
             AccountMenu(profile: profile, signOut: signOut)
         }

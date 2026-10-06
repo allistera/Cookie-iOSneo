@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The design's category tabs: large text with an unread count, plus page
 /// dots. An approved exception to the native-navigation rule; paging itself
-/// is the native page-style TabView in InboxView.
+/// is the native page-style TabView in MailboxView.
 struct InboxTabStrip: View {
     let tabs: [InboxTab]
     @Binding var selection: String

@@ -12,7 +12,7 @@ struct EmailRow: View {
             avatar
             VStack(alignment: .leading, spacing: 3) {
                 HStack(alignment: .center, spacing: 6) {
-                    Text(email.senderName)
+                    Text(email.displayName)
                         .font(CookieFont.text(weight, size: 17, relativeTo: .body))
                         .foregroundStyle(Color(.primaryText))
                         .lineLimit(1)
@@ -53,8 +53,8 @@ struct EmailRow: View {
     }
 
     private var avatar: some View {
-        let tone = AvatarTone.index(for: email.senderName)
-        return Text(email.senderName.prefix(1).uppercased())
+        let tone = AvatarTone.index(for: email.displayName)
+        return Text(email.displayName.prefix(1).uppercased())
             .font(CookieFont.text(.semibold, size: 16, relativeTo: .body))
             .foregroundStyle(Color(Self.avatarText[tone]))
             .frame(width: 40, height: 40)

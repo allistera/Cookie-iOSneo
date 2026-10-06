@@ -3,7 +3,7 @@ import SwiftUI
 /// One category page: its rows, then Load more or the category's footer line.
 struct InboxPageView: View {
     let tab: InboxTab
-    let inbox: Inbox
+    let mailbox: Mailbox
     var now: Date = .now
 
     var body: some View {
@@ -26,26 +26,26 @@ struct InboxPageView: View {
         .scrollContentBackground(.hidden)
         .background(Color(.surface))
         .refreshable {
-            await inbox.refresh()
+            await mailbox.refresh()
         }
     }
 
     @ViewBuilder private var footer: some View {
         VStack(spacing: 12) {
-            if inbox.refreshFailed {
+            if mailbox.refreshFailed {
                 Text("Couldn't refresh. Pull down to try again.")
                     .foregroundStyle(Color(.secondaryText))
             }
-            if inbox.nextCursor != nil {
-                if inbox.loadMoreFailed {
+            if mailbox.nextCursor != nil {
+                if mailbox.loadMoreFailed {
                     Text("Couldn't load more.")
                         .foregroundStyle(Color(.secondaryText))
                 }
-                Button(inbox.loadMoreFailed ? "Retry" : "Load more") {
-                    Task { await inbox.loadMore() }
+                Button(mailbox.loadMoreFailed ? "Retry" : "Load more") {
+                    Task { await mailbox.loadMore() }
                 }
                 .buttonStyle(.bordered)
-                .disabled(inbox.isLoadingMore)
+                .disabled(mailbox.isLoadingMore)
             } else if tab.isImportant {
                 Text("That's everything important. Cookie's watching the rest.")
                     .foregroundStyle(Color(.secondaryText))
