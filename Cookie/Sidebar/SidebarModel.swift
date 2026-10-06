@@ -3,6 +3,7 @@ import Observation
 
 /// What the sidebar can show in the main area.
 enum SidebarSelection: Hashable {
+    case today
     case folder(MailboxFolder)
     case drafts
 }

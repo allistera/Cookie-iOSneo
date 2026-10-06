@@ -48,4 +48,11 @@ struct EndpointTests {
         #expect(CookieAPIEndpoints.messages.url?.absoluteString == "https://messages-api.infinitywave.online/messages")
         #expect(CookieAPIEndpoints.send.url?.absoluteString == "https://send-api.infinitywave.online/send")
     }
+
+    @Test func tasksPinOrigins() {
+        #expect(CookieAPIEndpoints.tasks.url?.absoluteString == "https://tasks-api.infinitywave.online/tasks")
+        #expect(
+            CookieAPIEndpoints.tasksRefresh.url?.absoluteString == "https://tasks-api.infinitywave.online/tasks/refresh"
+        )
+    }
 }

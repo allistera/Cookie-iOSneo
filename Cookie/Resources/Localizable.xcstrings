@@ -4,14 +4,40 @@
     "%lld items": {},
     "%lld unread": {},
     "(No subject)": {},
+    "AI Today": {},
+    "AI Today unavailable": {},
     "Account": {},
     "Blocked": {},
     "Check your connection and try again.": {},
     "Close sidebar": {},
     "Collapsed": {},
     "Cookie": {},
+    "Cookie filtered %lld emails as noise": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Cookie filtered %lld email as noise"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "Cookie filtered %lld emails as noise"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Cookie hasn't sorted your inbox yet.": {},
     "Couldn't load labels.": {},
     "Couldn't load more.": {},
+    "Couldn't refresh.": {},
     "Couldn't refresh. Pull down to try again.": {},
     "Couldn't send. Try again.": {},
     "Done": {},
@@ -30,10 +56,12 @@
     "New senders": {},
     "No drafts": {},
     "No recipient": {},
+    "No triage yet": {},
     "On %@, %@ wrote:": {},
     "Open sidebar": {},
     "Other": {},
     "Page %lld of %lld": {},
+    "Refresh": {},
     "Reply sent to %@.": {},
     "Reply to %@": {},
     "Retry": {},
@@ -48,7 +76,9 @@
     "That's everything important. Cookie's watching the rest.": {},
     "This message can't be shown safely right now.": {},
     "To: %@": {},
+    "Too many refreshes. Try again shortly.": {},
     "Unread": {},
+    "Updated %@": {},
     "Views": {},
     "Yesterday": {},
     "You're all caught up.": {},

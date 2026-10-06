@@ -33,6 +33,8 @@ enum CookieAPIEndpoints {
 
     static let labels = Endpoint(host: "labels-api.infinitywave.online", path: "/labels")
     static let drafts = Endpoint(host: "drafts-api.infinitywave.online", path: "/drafts")
+    static let tasks = Endpoint(host: "tasks-api.infinitywave.online", path: "/tasks")
+    static let tasksRefresh = Endpoint(host: "tasks-api.infinitywave.online", path: "/tasks/refresh")
 
     /// One folder's rows, newest first. `cursor` is the previous page's `nextCursor`.
     static func mailbox(folder: MailboxFolder, before cursor: String?, limit: Int = 50) -> Endpoint {
