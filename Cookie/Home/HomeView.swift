@@ -10,6 +10,7 @@ struct HomeView: View {
 
     @State private var mailbox: Mailbox
     @State private var sidebar: SidebarModel
+    @State private var today: TodayModel
     @AccessibilityFocusState private var headerButtonFocused: Bool
 
     init(profile: UserProfile, client: APIClient, signOut: @escaping () async -> Void) {
@@ -18,6 +19,7 @@ struct HomeView: View {
         self.signOut = signOut
         _mailbox = State(initialValue: Mailbox(client: client))
         _sidebar = State(initialValue: SidebarModel(client: client))
+        _today = State(initialValue: TodayModel(client: client))
     }
 
     var body: some View {
@@ -30,6 +32,8 @@ struct HomeView: View {
                 VStack(spacing: 0) {
                     header
                     switch sidebar.selection {
+                    case .today:
+                        TodayView(today: today)
                     case .folder:
                         MailboxView(mailbox: mailbox)
                     case .drafts:
@@ -40,6 +44,9 @@ struct HomeView: View {
                 .toolbarVisibility(.hidden, for: .navigationBar)
                 .navigationDestination(for: EmailSummary.self) { email in
                     EmailDetailView(email: email, client: client, mailbox: mailbox)
+                }
+                .navigationDestination(for: TriageItem.self) { item in
+                    EmailReferenceView(item: item, client: client, mailbox: mailbox, today: today)
                 }
             }
         }

@@ -19,6 +19,7 @@ struct SidebarView: View {
     }
 
     private static let primaryViews = [
+        Item(selection: .today, symbol: "sparkles", title: "AI Today", tint: Color(.todayAccent)),
         Item(selection: .folder(.inbox), symbol: "tray", title: "Inbox", tint: Color(.tagClayText)),
         Item(selection: .folder(.screening), symbol: "person", title: "New senders"),
     ]
