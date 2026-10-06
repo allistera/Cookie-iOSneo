@@ -1,11 +1,11 @@
 import Foundation
 
-struct EmailLabel: Decodable, Equatable, Sendable {
+struct EmailLabel: Decodable, Hashable, Sendable {
     let name: String
     let color: String?
 }
 
-struct EmailCategory: Decodable, Equatable, Identifiable, Sendable {
+struct EmailCategory: Decodable, Hashable, Identifiable, Sendable {
     let id: String
     let name: String
     let color: String?
@@ -17,14 +17,14 @@ struct EmailCategory: Decodable, Equatable, Identifiable, Sendable {
 }
 
 /// One inbox row from `GET /emails`. Bodies are fetched separately when read.
-struct EmailSummary: Decodable, Equatable, Identifiable, Sendable {
+struct EmailSummary: Decodable, Hashable, Identifiable, Sendable {
     let id: String
     let fromName: String?
     let fromAddress: String
     let subject: String?
     let snippet: String?
     let sentAt: Date
-    let isUnread: Bool
+    var isUnread: Bool
     let priority: String?
     let labels: [EmailLabel]
     let category: EmailCategory?

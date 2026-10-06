@@ -137,4 +137,40 @@ struct APIClientTests {
         }
         #expect(await log.requests.isEmpty)
     }
+
+    @Test func postEncodesSnakeCaseBodyAndContentType() async throws {
+        let log = CallLog()
+        let client = makeClient([StubResponse(status: 200, body: "{}")], log: log)
+
+        let _: EmptyResponse = try await client.post(
+            CookieAPIEndpoints.messages, body: MarkReadRequest(id: "m1", isUnread: false))
+
+        let request = try #require(await log.requests.first)
+        #expect(request.httpMethod == "POST")
+        #expect(request.value(forHTTPHeaderField: "Content-Type") == "application/json")
+        let json = try JSONSerialization.jsonObject(with: #require(request.httpBody)) as? [String: Any]
+        #expect(json?["id"] as? String == "m1")
+        #expect(json?["is_unread"] as? Bool == false)
+    }
+
+    @Test func patchWithPlainEncoderKeepsCamelCase() async throws {
+        let log = CallLog()
+        let client = makeClient([StubResponse(status: 200, body: "{}")], log: log)
+        let body = SendRequest(
+            recipient: "a@example.com", subject: "Re: x", text: "hi", replyToMessageId: "m1", requestId: "r1")
+
+        let _: EmptyResponse = try await client.patch(CookieAPIEndpoints.send, body: body, encoder: JSONEncoder())
+
+        let request = try #require(await log.requests.first)
+        #expect(request.httpMethod == "PATCH")
+        let json = try JSONSerialization.jsonObject(with: #require(request.httpBody)) as? [String: Any]
+        #expect(json?["replyToMessageId"] as? String == "m1")
+        #expect(json?["requestId"] as? String == "r1")
+    }
+
+    @Test func emptyResponseIgnoresBody() async throws {
+        let log = CallLog()
+        let client = makeClient([StubResponse(status: 200, body: "not json")], log: log)
+        let _: EmptyResponse = try await client.get(CookieAPIEndpoints.categories)
+    }
 }

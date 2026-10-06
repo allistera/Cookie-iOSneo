@@ -21,6 +21,15 @@ struct Endpoint: Equatable, Sendable {
 /// Every production route the app calls. A contract test pins each one.
 enum CookieAPIEndpoints {
     static let categories = Endpoint(host: "labels-api.infinitywave.online", path: "/categories")
+    static let messages = Endpoint(host: "messages-api.infinitywave.online", path: "/messages")
+    static let send = Endpoint(host: "send-api.infinitywave.online", path: "/send")
+
+    /// One message's body. Calendar-invite parsing is deferred: the reader does not show invites.
+    static func message(id: String) -> Endpoint {
+        Endpoint(
+            host: "messages-api.infinitywave.online", path: "/messages",
+            queryItems: [URLQueryItem(name: "id", value: id), URLQueryItem(name: "calendar", value: "deferred")])
+    }
 
     /// The inbox, newest first. `cursor` is the previous page's `nextCursor`.
     static func inbox(before cursor: String?, limit: Int = 50) -> Endpoint {

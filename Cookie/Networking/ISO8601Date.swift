@@ -27,3 +27,12 @@ extension JSONDecoder {
         return decoder
     }
 }
+
+extension JSONEncoder {
+    /// Encodes request bodies with the Workers' snake_case keys.
+    static func cookieAPI() -> JSONEncoder {
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        return encoder
+    }
+}

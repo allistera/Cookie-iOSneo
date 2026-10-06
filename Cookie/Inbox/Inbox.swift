@@ -81,4 +81,19 @@ final class Inbox {
             loadMoreFailed = true
         }
     }
+
+    /// Clears the row's unread flag so tab counts and row weight update at once.
+    func markRead(_ id: String) {
+        setUnread(id, false)
+    }
+
+    /// Restores the unread flag after the server rejected a mark-read.
+    func markUnread(_ id: String) {
+        setUnread(id, true)
+    }
+
+    private func setUnread(_ id: String, _ isUnread: Bool) {
+        guard let index = emails.firstIndex(where: { $0.id == id }) else { return }
+        emails[index].isUnread = isUnread
+    }
 }

@@ -63,11 +63,11 @@ struct EmailRow: View {
     }
 
     /// Indexed by `AvatarTone.index`, which is tested to stay within `0..<6`.
-    private static let avatarBackground: [ColorResource] = [
+    static let avatarBackground: [ColorResource] = [
         .avatar1Background, .avatar2Background, .avatar3Background,
         .avatar4Background, .avatar5Background, .avatar6Background,
     ]
-    private static let avatarText: [ColorResource] = [
+    static let avatarText: [ColorResource] = [
         .avatar1Text, .avatar2Text, .avatar3Text, .avatar4Text, .avatar5Text, .avatar6Text,
     ]
 }
