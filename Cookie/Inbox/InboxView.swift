@@ -2,12 +2,8 @@ import SwiftUI
 
 /// The inbox: category tabs over swipeable pages of rows.
 struct InboxView: View {
-    @State private var inbox: Inbox
+    let inbox: Inbox
     @State private var selection = InboxTab.importantID
-
-    init(client: APIClient) {
-        _inbox = State(initialValue: Inbox(client: client))
-    }
 
     var body: some View {
         content
@@ -55,10 +51,10 @@ struct InboxView: View {
 
 #if DEBUG
     #Preview("Populated") {
-        InboxView(client: InboxPreviewData.client(emailsStatus: 200))
+        InboxView(inbox: Inbox(client: InboxPreviewData.client(emailsStatus: 200)))
     }
 
     #Preview("Failed") {
-        InboxView(client: InboxPreviewData.client(emailsStatus: 500))
+        InboxView(inbox: Inbox(client: InboxPreviewData.client(emailsStatus: 500)))
     }
 #endif

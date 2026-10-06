@@ -1,17 +1,33 @@
 import SwiftUI
 
-/// The signed-in screen: the design's header over the inbox.
+/// The signed-in screen: the design's header over the inbox, with email
+/// detail pushed on a native navigation stack.
 struct HomeView: View {
     let profile: UserProfile
     let client: APIClient
     let signOut: () async -> Void
 
+    @State private var inbox: Inbox
+
+    init(profile: UserProfile, client: APIClient, signOut: @escaping () async -> Void) {
+        self.profile = profile
+        self.client = client
+        self.signOut = signOut
+        _inbox = State(initialValue: Inbox(client: client))
+    }
+
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            InboxView(client: client)
+        NavigationStack {
+            VStack(spacing: 0) {
+                header
+                InboxView(inbox: inbox)
+            }
+            .background(Color(.surface))
+            .toolbarVisibility(.hidden, for: .navigationBar)
+            .navigationDestination(for: EmailSummary.self) { email in
+                EmailDetailView(email: email, client: client, inbox: inbox)
+            }
         }
-        .background(Color(.surface))
     }
 
     private var header: some View {

@@ -9,10 +9,12 @@ struct InboxPageView: View {
     var body: some View {
         List {
             ForEach(tab.emails) { email in
-                EmailRow(email: email, now: now)
-                    .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
-                    .listRowBackground(Color(.surface))
-                    .listRowSeparatorTint(Color(.hairline))
+                NavigationLink(value: email) {
+                    EmailRow(email: email, now: now)
+                }
+                .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                .listRowBackground(Color(.surface))
+                .listRowSeparatorTint(Color(.hairline))
             }
             footer
                 .frame(maxWidth: .infinity)
