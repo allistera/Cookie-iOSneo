@@ -15,14 +15,34 @@ struct APIClient: Sendable {
         self.transport = transport
     }
 
-    /// Fetches and decodes `endpoint`. A 401 forces one token renewal and one
-    /// retry; a second 401 invalidates the session.
     func get<Response: Decodable & Sendable>(_ endpoint: Endpoint) async throws -> Response {
+        try await request(endpoint, method: "GET", body: nil)
+    }
+
+    /// Posts `body` as JSON. The default encoder writes snake_case keys;
+    /// pass `JSONEncoder()` for routes that read camelCase.
+    func post<Body: Encodable & Sendable, Response: Decodable & Sendable>(
+        _ endpoint: Endpoint, body: Body, encoder: JSONEncoder = .cookieAPI()
+    ) async throws -> Response {
+        try await request(endpoint, method: "POST", body: try encoder.encode(body))
+    }
+
+    func patch<Body: Encodable & Sendable, Response: Decodable & Sendable>(
+        _ endpoint: Endpoint, body: Body, encoder: JSONEncoder = .cookieAPI()
+    ) async throws -> Response {
+        try await request(endpoint, method: "PATCH", body: try encoder.encode(body))
+    }
+
+    /// A 401 forces one token renewal and one retry; a second 401
+    /// invalidates the session.
+    private func request<Response: Decodable & Sendable>(
+        _ endpoint: Endpoint, method: String, body: Data?
+    ) async throws -> Response {
         guard let url = endpoint.url else { throw APIError.invalidRequest }
 
-        var (data, status) = try await send(url, token: try await tokens.current())
+        var (data, status) = try await send(url, method: method, body: body, token: try await tokens.current())
         if status == 401 {
-            (data, status) = try await send(url, token: try await tokens.renewed())
+            (data, status) = try await send(url, method: method, body: body, token: try await tokens.renewed())
             if status == 401 {
                 await tokens.invalidate()
                 throw APIError.unauthorised
@@ -30,6 +50,9 @@ struct APIClient: Sendable {
         }
         guard (200..<300).contains(status) else { throw APIError.server(status: status) }
 
+        if Response.self == EmptyResponse.self, let empty = EmptyResponse() as? Response {
+            return empty
+        }
         do {
             return try JSONDecoder.cookieAPI().decode(Response.self, from: data)
         } catch {
@@ -37,10 +60,15 @@ struct APIClient: Sendable {
         }
     }
 
-    private func send(_ url: URL, token: String) async throws -> (Data, Int) {
+    private func send(_ url: URL, method: String, body: Data?, token: String) async throws -> (Data, Int) {
         var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.httpBody = body
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if body != nil {
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
 
         do {
             let (data, response) = try await transport(request)
@@ -57,3 +85,6 @@ struct APIClient: Sendable {
         }
     }
 }
+
+/// For routes whose response body the app does not read.
+struct EmptyResponse: Decodable, Equatable, Sendable {}

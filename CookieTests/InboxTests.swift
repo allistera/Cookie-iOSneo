@@ -154,4 +154,16 @@ struct InboxTests {
 
         #expect(inbox.emails.map(\.id) == ["new"])
     }
+
+    @Test func markReadAndUnreadUpdateTheRow() async {
+        let inbox = makeInbox(emailResponses: [(200, #"{"emails":[\#(row("a", unread: true))],"nextCursor":null}"#)])
+        await inbox.refresh()
+
+        inbox.markRead("a")
+        #expect(inbox.emails.first?.isUnread == false)
+        #expect(inbox.tabs.last?.unreadCount == 0)
+
+        inbox.markUnread("a")
+        #expect(inbox.emails.first?.isUnread == true)
+    }
 }

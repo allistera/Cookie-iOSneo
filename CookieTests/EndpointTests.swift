@@ -26,4 +26,14 @@ struct EndpointTests {
     @Test func pathWithoutLeadingSlashHasNoURL() {
         #expect(Endpoint(host: "example.com", path: "emails").url == nil)
     }
+
+    @Test func messageBodyPinsOriginAndQuery() {
+        let url = CookieAPIEndpoints.message(id: "6f1c").url
+        #expect(url?.absoluteString == "https://messages-api.infinitywave.online/messages?id=6f1c&calendar=deferred")
+    }
+
+    @Test func messagesAndSendPinOrigins() {
+        #expect(CookieAPIEndpoints.messages.url?.absoluteString == "https://messages-api.infinitywave.online/messages")
+        #expect(CookieAPIEndpoints.send.url?.absoluteString == "https://send-api.infinitywave.online/send")
+    }
 }
