@@ -23,6 +23,10 @@ private struct StubResponse: Sendable {
     let body: String
 }
 
+private struct Payload: Decodable, Equatable, Sendable {
+    let unreadCount: Int
+}
+
 struct APIClientTests {
     /// A client whose transport answers the nth request with the nth stub,
     /// repeating the last stub for any further requests.
@@ -49,13 +53,13 @@ struct APIClientTests {
         let log = CallLog()
         let client = makeClient([StubResponse(status: 200, body: #"{"unreadCount":7}"#)], log: log)
 
-        let state: MailboxState = try await client.get(CookieAPIEndpoints.mailboxState)
+        let state: Payload = try await client.get(CookieAPIEndpoints.categories)
 
-        #expect(state == MailboxState(unreadCount: 7))
+        #expect(state == Payload(unreadCount: 7))
         let requests = await log.requests
         #expect(requests.count == 1)
         #expect(requests.first?.value(forHTTPHeaderField: "Authorization") == "Bearer first-token")
-        #expect(requests.first?.url?.absoluteString == "https://emails-api.infinitywave.online/emails/state")
+        #expect(requests.first?.url?.absoluteString == "https://labels-api.infinitywave.online/categories")
     }
 
     @Test func renewsTokenAndRetriesOnceAfterUnauthorised() async throws {
@@ -65,9 +69,9 @@ struct APIClientTests {
             log: log
         )
 
-        let state: MailboxState = try await client.get(CookieAPIEndpoints.mailboxState)
+        let state: Payload = try await client.get(CookieAPIEndpoints.categories)
 
-        #expect(state == MailboxState(unreadCount: 2))
+        #expect(state == Payload(unreadCount: 2))
         let requests = await log.requests
         #expect(requests.count == 2)
         #expect(requests.last?.value(forHTTPHeaderField: "Authorization") == "Bearer renewed-token")
@@ -80,7 +84,7 @@ struct APIClientTests {
         let client = makeClient([StubResponse(status: 401, body: "{}")], log: log)
 
         await #expect(throws: APIError.unauthorised) {
-            let _: MailboxState = try await client.get(CookieAPIEndpoints.mailboxState)
+            let _: Payload = try await client.get(CookieAPIEndpoints.categories)
         }
         #expect(await log.requests.count == 2)
         #expect(await log.invalidations == 1)
@@ -92,7 +96,7 @@ struct APIClientTests {
         let client = makeClient([stub], log: log)
 
         await #expect(throws: APIError.server(status: 500)) {
-            let _: MailboxState = try await client.get(CookieAPIEndpoints.mailboxState)
+            let _: Payload = try await client.get(CookieAPIEndpoints.categories)
         }
         #expect(await log.requests.count == 1)
     }
@@ -102,7 +106,7 @@ struct APIClientTests {
         let client = makeClient([StubResponse(status: 200, body: "not json")], log: log)
 
         await #expect(throws: APIError.decoding) {
-            let _: MailboxState = try await client.get(CookieAPIEndpoints.mailboxState)
+            let _: Payload = try await client.get(CookieAPIEndpoints.categories)
         }
     }
 
@@ -111,7 +115,7 @@ struct APIClientTests {
         let client = APIClient(tokens: tokens) { _ in throw URLError(.notConnectedToInternet) }
 
         await #expect(throws: APIError.transport) {
-            let _: MailboxState = try await client.get(CookieAPIEndpoints.mailboxState)
+            let _: Payload = try await client.get(CookieAPIEndpoints.categories)
         }
     }
 
@@ -120,7 +124,7 @@ struct APIClientTests {
         let client = APIClient(tokens: tokens) { _ in throw URLError(.cancelled) }
 
         await #expect(throws: CancellationError.self) {
-            let _: MailboxState = try await client.get(CookieAPIEndpoints.mailboxState)
+            let _: Payload = try await client.get(CookieAPIEndpoints.categories)
         }
     }
 
@@ -129,7 +133,7 @@ struct APIClientTests {
         let client = makeClient([StubResponse(status: 200, body: "{}")], log: log)
 
         await #expect(throws: APIError.invalidRequest) {
-            let _: MailboxState = try await client.get(Endpoint(host: "example.com", path: "no-slash"))
+            let _: Payload = try await client.get(Endpoint(host: "example.com", path: "no-slash"))
         }
         #expect(await log.requests.isEmpty)
     }

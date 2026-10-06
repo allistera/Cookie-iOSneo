@@ -5,3 +5,7 @@ opt_in_rules:
 line_length: 120
 trailing_comma:
   mandatory_comma: true
+# swift-format puts the brace of a wrapped condition or signature on its own line.
+opening_brace:
+  ignore_multiline_statement_conditions: true
+  ignore_multiline_function_signatures: true

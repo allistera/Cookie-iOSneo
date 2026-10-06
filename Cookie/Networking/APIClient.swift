@@ -31,7 +31,7 @@ struct APIClient: Sendable {
         guard (200..<300).contains(status) else { throw APIError.server(status: status) }
 
         do {
-            return try JSONDecoder().decode(Response.self, from: data)
+            return try JSONDecoder.cookieAPI().decode(Response.self, from: data)
         } catch {
             throw APIError.decoding
         }
