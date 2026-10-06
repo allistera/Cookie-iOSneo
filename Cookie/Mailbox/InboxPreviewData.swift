@@ -61,15 +61,32 @@
             {"id":"work","name":"Work & Career","color":"#138A5E"}]}
             """
 
+        static let labelsJSON = """
+            {"labels":[{"id":"l1","name":"Newsletters","color":"#B3792A"},
+            {"id":"l2","name":"Personal","color":"#B1463A"},{"id":"l3","name":"Work","color":"#138A5E"}]}
+            """
+
+        static let draftsJSON = """
+            {"drafts":[{"id":"d1","to":"jordan@example.com","subject":"Re: Final terms",
+            "preview":"Thanks Jordan, I'll confirm by Thursday.","updatedAt":"2026-10-05T10:02:00Z"},
+            {"id":"d2","to":null,"subject":null,"preview":"Notes for the offsite",
+            "updatedAt":"2026-10-03T08:30:00Z"}]}
+            """
+
         static func client(emailsStatus: Int) -> APIClient {
             let tokens = TokenProvider(current: { "preview" }, renewed: { "preview" }, invalidate: {})
             return APIClient(tokens: tokens) { request in
                 guard let url = request.url else { throw URLError(.badURL) }
-                let isCategories = url.path == "/categories"
-                let status = isCategories ? 200 : emailsStatus
+                let (status, body): (Int, String) =
+                    switch url.path {
+                    case "/categories": (200, categoriesJSON)
+                    case "/labels": (200, labelsJSON)
+                    case "/drafts": (200, draftsJSON)
+                    default: (emailsStatus, pageJSON)
+                    }
                 guard let response = HTTPURLResponse(url: url, statusCode: status, httpVersion: nil, headerFields: nil)
                 else { throw URLError(.badURL) }
-                return (Data((isCategories ? categoriesJSON : pageJSON).utf8), response)
+                return (Data(body.utf8), response)
             }
         }
     }
