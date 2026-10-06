@@ -2,16 +2,27 @@
   "sourceLanguage" : "en",
   "strings" : {
     "%lld unread" : {},
+    "(No subject)" : {},
     "Account" : {},
     "Check your connection and try again." : {},
     "Cookie" : {},
+    "Couldn't load more." : {},
+    "Couldn't refresh. Pull down to try again." : {},
     "Email" : {},
-    "Mailbox unavailable" : {},
+    "Important" : {},
+    "Inbox unavailable" : {},
+    "Load more" : {},
+    "Other" : {},
+    "Page %lld of %lld" : {},
     "Retry" : {},
     "Sign in" : {},
     "Sign out" : {},
     "Sign-in failed. Check your connection and try again." : {},
-    "Signed in, but your profile could not be read. Please try again." : {}
+    "Signed in, but your profile could not be read. Please try again." : {},
+    "That's everything important. Cookie's watching the rest." : {},
+    "Unread" : {},
+    "Yesterday" : {},
+    "You're all caught up." : {}
   },
   "version" : "1.0"
 }
