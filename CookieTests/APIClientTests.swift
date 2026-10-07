@@ -27,6 +27,13 @@ private struct Payload: Decodable, Equatable, Sendable {
     let unreadCount: Int
 }
 
+private actor GenerationBox {
+    private(set) var value: UInt64 = 0
+
+    func read() -> UInt64 { value }
+    func advance() { value &+= 1 }
+}
+
 struct APIClientTests {
     /// A client whose transport answers the nth request with the nth stub,
     /// repeating the last stub for any further requests.
@@ -60,6 +67,16 @@ struct APIClientTests {
         #expect(requests.count == 1)
         #expect(requests.first?.value(forHTTPHeaderField: "Authorization") == "Bearer first-token")
         #expect(requests.first?.url?.absoluteString == "https://labels-api.infinitywave.online/categories")
+        #expect(requests.first?.timeoutInterval == 60)
+    }
+
+    @Test func refreshEndpointUsesBoundedLongTimeout() async throws {
+        let log = CallLog()
+        let client = makeClient([StubResponse(status: 200, body: "{}")], log: log)
+
+        let _: EmptyResponse = try await client.post(CookieAPIEndpoints.tasksRefresh, body: EmptyBody())
+
+        #expect(await log.requests.first?.timeoutInterval == 240)
     }
 
     @Test func renewsTokenAndRetriesOnceAfterUnauthorised() async throws {
@@ -88,6 +105,33 @@ struct APIClientTests {
         }
         #expect(await log.requests.count == 2)
         #expect(await log.invalidations == 1)
+    }
+
+    @Test func staleResponseCannotInvalidateANewerAuthenticationContext() async {
+        let log = CallLog()
+        let generation = GenerationBox()
+        let tokens = TokenProvider(
+            current: { "token" },
+            renewed: { "renewed-token" },
+            invalidate: { await log.recordInvalidation() },
+            generation: { await generation.read() },
+            invalidateIfCurrent: { expected in
+                guard await generation.read() == expected else { return }
+                await log.recordInvalidation()
+            }
+        )
+        let client = APIClient(tokens: tokens) { request in
+            await generation.advance()
+            guard let url = request.url,
+                let response = HTTPURLResponse(url: url, statusCode: 401, httpVersion: nil, headerFields: nil)
+            else { throw URLError(.badURL) }
+            return (Data("{}".utf8), response)
+        }
+
+        await #expect(throws: CancellationError.self) {
+            let _: Payload = try await client.get(CookieAPIEndpoints.categories)
+        }
+        #expect(await log.invalidations == 0)
     }
 
     @Test func serverErrorIsNotRetried() async {

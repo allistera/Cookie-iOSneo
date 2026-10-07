@@ -12,6 +12,7 @@ struct InboxPageView: View {
                 NavigationLink(value: email) {
                     EmailRow(email: email, now: now)
                 }
+                .accessibilityIdentifier("message-\(email.id)")
                 .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
                 .listRowBackground(Color(.surface))
                 .listRowSeparatorTint(Color(.hairline))

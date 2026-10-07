@@ -2,12 +2,19 @@ import SwiftUI
 
 /// The design's email detail screen: subject, sender, body, and reply.
 struct EmailDetailView: View {
+    @ScaledMetric(relativeTo: .body) private var bodyFontSize: CGFloat = 17
     @State private var detail: EmailDetail
     @State private var bodyHeight: CGFloat = 44
     @FocusState private var replyFocused: Bool
 
-    init(email: EmailSummary, client: APIClient, mailbox: Mailbox) {
-        _detail = State(initialValue: EmailDetail(email: email, client: client, mailbox: mailbox))
+    init(
+        email: EmailSummary, client: APIClient, mailbox: Mailbox, initialBody: MessageBody? = nil,
+        isInboxMessage: Bool? = nil, onMarkedRead: @escaping @MainActor (String) -> Void = { _ in }
+    ) {
+        _detail = State(
+            initialValue: EmailDetail(
+                email: email, client: client, mailbox: mailbox, initialBody: initialBody,
+                isInboxMessage: isInboxMessage, onMarkedRead: onMarkedRead))
     }
 
     private var email: EmailSummary { detail.email }
@@ -38,7 +45,7 @@ struct EmailDetailView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 32)
                 if detail.reply == .sent {
-                    Text("Reply sent to \(email.senderName).")
+                    Text("Reply sent to \(detail.replyRecipientDisplayName).")
                         .font(CookieFont.text(.regular, size: 14, relativeTo: .footnote))
                         .foregroundStyle(Color(.tagSageText))
                         .frame(maxWidth: .infinity)
@@ -48,9 +55,11 @@ struct EmailDetailView: View {
                 Spacer(minLength: 48)
             }
         }
+        .accessibilityIdentifier("readerScroll")
         .background(Color(.surface))
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarVisibility(.visible, for: .navigationBar)
         .safeAreaInset(edge: .bottom) {
             if isComposerShown {
                 ReplyComposer(detail: detail, focused: $replyFocused)
@@ -75,9 +84,15 @@ struct EmailDetailView: View {
                     .font(CookieFont.text(.semibold, size: 17, relativeTo: .body))
                     .foregroundStyle(Color(.primaryText))
                     .lineLimit(1)
-                Text("to me")
-                    .font(CookieFont.text(.regular, size: 14, relativeTo: .subheadline))
-                    .foregroundStyle(Color(.secondaryText))
+                Text(
+                    email.isSent
+                        ? (detail.email.canReply
+                            ? "To: \(detail.replyRecipientDisplayName)"
+                            : String(localized: "No recipient"))
+                        : String(localized: "to me")
+                )
+                .font(CookieFont.text(.regular, size: 14, relativeTo: .subheadline))
+                .foregroundStyle(Color(.secondaryText))
             }
             Spacer()
             Text(RelativeSentTime.string(for: email.sentAt))
@@ -111,16 +126,19 @@ struct EmailDetailView: View {
         case .loaded(let message):
             if let html = message.bodyHtml, !html.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
-                    if !detail.showsRemoteImages, EmailBodyView.hasBlockedRemoteContent(html) {
+                    if !detail.showsRemoteImages {
                         Button("Show images", systemImage: "photo") {
                             detail.showRemoteImages()
                         }
                         .buttonStyle(.bordered)
+                        .accessibilityIdentifier("showRemoteContent")
                     }
                     EmailBodyView(
-                        html: html, blocksRemoteContent: !detail.showsRemoteImages, contentHeight: $bodyHeight
+                        html: html, blocksRemoteContent: !detail.showsRemoteImages, baseFontSize: bodyFontSize,
+                        contentHeight: $bodyHeight
                     )
                     .frame(height: bodyHeight)
+                    .accessibilityIdentifier("messageBody")
                 }
             } else {
                 Text(message.bodyText ?? "")
@@ -128,6 +146,7 @@ struct EmailDetailView: View {
                     .foregroundStyle(Color(.primaryText))
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityIdentifier("messageBody")
             }
         }
     }
@@ -151,8 +170,10 @@ struct EmailDetailView: View {
                     .background(open ? Color(.primaryText) : Color(.surface), in: .circle)
                     .overlay(Circle().strokeBorder(open ? Color(.primaryText) : Color(.hairline)))
             }
-            .accessibilityLabel(Text("Reply to \(email.senderName)"))
+            .accessibilityLabel(Text("Reply to \(detail.replyRecipientDisplayName)"))
             .accessibilityAddTraits(open ? [.isSelected] : [])
+            .accessibilityIdentifier("toggleReply")
+            .disabled(detail.reply == .sending || !detail.email.canReply)
             Color(.hairline).frame(height: 1)
         }
     }

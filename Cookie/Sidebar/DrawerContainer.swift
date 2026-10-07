@@ -38,11 +38,11 @@ struct DrawerContainer<Sidebar: View, Content: View>: View {
                             .buttonStyle(.plain)
                             .accessibilityLabel("Close sidebar")
                             .transition(.opacity)
+                            .simultaneousGesture(closeDrag)
                         }
                     }
                     .offset(x: offset)
                     .accessibilityHidden(isOpen)
-                    .gesture(closeDrag, including: isOpen ? .all : .none)
             }
             .animation(reduceMotion ? nil : .default, value: isOpen)
             .onKeyPress(.escape) {

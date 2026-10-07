@@ -26,23 +26,12 @@ struct TodayView: View {
             ProgressView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .failed:
-            ContentUnavailableView {
-                Label("AI Today unavailable", systemImage: "wifi.exclamationmark")
-            } description: {
-                Text("Check your connection and try again.")
-            } actions: {
-                Button("Retry") {
-                    Task { await today.load() }
-                }
-                .buttonStyle(.borderedProminent)
-            }
+            failureContent
         case .empty:
-            ContentUnavailableView {
-                Label("No triage yet", systemImage: "sparkles")
-            } description: {
-                Text("Cookie hasn't sorted your inbox yet.")
-            } actions: {
-                refreshButton
+            if today.loadError != nil {
+                failureContent
+            } else {
+                noTriageContent
             }
         case .loaded(let digest):
             ScrollView {
@@ -63,7 +52,7 @@ struct TodayView: View {
                 .padding(.bottom, 40)
             }
             .refreshable {
-                await today.load()
+                await today.refresh()
             }
         }
     }
@@ -77,18 +66,64 @@ struct TodayView: View {
                 Spacer()
                 refreshButton
             }
-            switch today.refreshState {
-            case .rateLimited:
-                Text("Too many refreshes. Try again shortly.")
-                    .font(CookieFont.text(.regular, size: 14, relativeTo: .footnote))
-                    .foregroundStyle(Color(.secondaryText))
-            case .failed:
-                Text("Couldn't refresh.")
-                    .font(CookieFont.text(.regular, size: 14, relativeTo: .footnote))
-                    .foregroundStyle(Color(.secondaryText))
-            case .idle, .refreshing:
-                EmptyView()
+            refreshFeedback
+        }
+    }
+
+    private var noTriageContent: some View {
+        ContentUnavailableView {
+            Label("No triage yet", systemImage: "sparkles")
+        } description: {
+            VStack(spacing: 4) {
+                Text("Cookie hasn't sorted your inbox yet.")
+                refreshFeedback
             }
+        } actions: {
+            refreshButton
+        }
+    }
+
+    private var failureContent: some View {
+        ContentUnavailableView {
+            Label("AI Today unavailable", systemImage: "wifi.exclamationmark")
+        } description: {
+            VStack(spacing: 4) {
+                Text("Check your connection and try again.")
+                refreshFeedback
+            }
+        } actions: {
+            Button("Retry") {
+                Task { await retry() }
+            }
+            .buttonStyle(.borderedProminent)
+        }
+    }
+
+    @ViewBuilder private var refreshFeedback: some View {
+        switch today.refreshState {
+        case .rateLimited:
+            Text("Too many refreshes. Try again shortly.")
+                .font(CookieFont.text(.regular, size: 14, relativeTo: .footnote))
+                .foregroundStyle(Color(.secondaryText))
+        case .failed:
+            Text("Couldn't refresh.")
+                .font(CookieFont.text(.regular, size: 14, relativeTo: .footnote))
+                .foregroundStyle(Color(.secondaryText))
+        case .idle, .refreshing:
+            if today.loadError != nil {
+                Text("Couldn't load AI Today.")
+                    .font(CookieFont.text(.regular, size: 14, relativeTo: .footnote))
+                    .foregroundStyle(Color(.secondaryText))
+            }
+        }
+    }
+
+    private func retry() async {
+        switch today.refreshState {
+        case .failed, .rateLimited:
+            await today.refresh()
+        case .idle, .refreshing:
+            await today.load()
         }
     }
 
@@ -117,6 +152,7 @@ struct TodayView: View {
                 NavigationLink(value: item) {
                     itemRow(item)
                 }
+                .accessibilityIdentifier("triage-\(item.messageId)")
                 .buttonStyle(.plain)
                 Color(.hairline).frame(height: 1)
             }

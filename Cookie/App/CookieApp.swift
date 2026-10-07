@@ -6,9 +6,20 @@ struct CookieApp: App {
     private let client: APIClient
 
     init() {
-        let session = Session(source: Auth0CredentialsSource())
+        let session: Session
+        #if DEBUG
+            if UITestFixtures.isEnabled {
+                session = UITestFixtures.session()
+                client = UITestFixtures.client(session: session)
+            } else {
+                session = Session(source: Auth0CredentialsSource())
+                client = APIClient(tokens: TokenProvider(session: session))
+            }
+        #else
+            session = Session(source: Auth0CredentialsSource())
+            client = APIClient(tokens: TokenProvider(session: session))
+        #endif
         _session = State(initialValue: session)
-        client = APIClient(tokens: TokenProvider(session: session))
     }
 
     var body: some Scene {

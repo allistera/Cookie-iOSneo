@@ -206,4 +206,67 @@ struct MailboxTests {
 
         #expect(await log.urls.count == count)
     }
+
+    @Test func confirmedReadUpdatesTheInboxBadgeExactlyOnce() async {
+        let body = #"{"emails":[\#(row("a", unread: true))],"nextCursor":null,"unreadCount":3}"#
+        let mailbox = makeMailbox(emailResponses: [(200, body)])
+        await mailbox.refresh()
+
+        mailbox.markRead("a")
+        mailbox.markRead("a")
+        #expect(mailbox.unreadCount == 2)
+        #expect(mailbox.emails.first?.isUnread == false)
+        #expect(mailbox.tabs.last?.unreadCount == 0)
+
+        mailbox.markUnread("a")
+        mailbox.markUnread("a")
+        #expect(mailbox.unreadCount == 3)
+    }
+
+    @Test func citedUnreadOutsideTheLoadedPageUpdatesBadgeExactlyOnce() async {
+        let mailbox = makeMailbox(emailResponses: [(200, page(["a"], next: "more"))])
+        await mailbox.refresh()
+
+        mailbox.markRead("cited", wasUnread: true, isInboxMessage: true)
+        mailbox.markRead("cited", wasUnread: true, isInboxMessage: true)
+
+        #expect(mailbox.unreadCount == 0)
+        #expect(mailbox.emails.map(\.id) == ["a"])
+    }
+
+    @Test func readingSpamDoesNotChangeTheInboxBadge() async {
+        let body = #"{"emails":[\#(row("spam", unread: true))],"nextCursor":null,"unreadCount":4}"#
+        let mailbox = makeMailbox(emailResponses: [(200, body)])
+        await mailbox.select(.spam)
+
+        mailbox.markRead("spam")
+
+        #expect(mailbox.unreadCount == 4)
+        #expect(mailbox.emails.first?.isUnread == false)
+    }
+
+    @Test func confirmedReadCannotBeUndoneByAnOlderRefresh() async {
+        let gate = Gate()
+        let body = #"{"emails":[\#(row("a", unread: true))],"nextCursor":null,"unreadCount":1}"#
+        let mailbox = makeMailbox(emailResponses: [(200, body)], gateFirstEmails: gate)
+        let refresh = Task { await mailbox.refresh() }
+        while await !gate.isWaiting { await Task.yield() }
+
+        mailbox.markRead("a", wasUnread: true, isInboxMessage: true)
+        await gate.open()
+        await refresh.value
+
+        #expect(mailbox.unreadCount == 0)
+        #expect(mailbox.emails.isEmpty)
+    }
+
+    @Test func pagingDoesNotCreateDuplicateRowsWithinOneResponse() async {
+        let mailbox = makeMailbox(
+            emailResponses: [(200, page(["a"], next: "cur")), (200, page(["b", "b"], next: nil))])
+        await mailbox.refresh()
+        await mailbox.loadMore()
+
+        #expect(mailbox.emails.map(\.id) == ["a", "b"])
+        #expect(mailbox.tabIDs == mailbox.tabs.map(\.id))
+    }
 }

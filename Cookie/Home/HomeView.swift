@@ -43,7 +43,7 @@ struct HomeView: View {
                 .background(Color(.surface))
                 .toolbarVisibility(.hidden, for: .navigationBar)
                 .navigationDestination(for: EmailSummary.self) { email in
-                    EmailDetailView(email: email, client: client, mailbox: mailbox)
+                    EmailDetailView(email: email, client: client, mailbox: mailbox, onMarkedRead: today.markRead)
                 }
                 .navigationDestination(for: TriageItem.self) { item in
                     EmailReferenceView(item: item, client: client, mailbox: mailbox, today: today)
@@ -86,6 +86,7 @@ struct HomeView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Open sidebar")
+            .accessibilityIdentifier("openSidebar")
             .accessibilityValue(sidebar.isOpen ? Text("Expanded") : Text("Collapsed"))
             .accessibilityFocused($headerButtonFocused)
             Spacer()

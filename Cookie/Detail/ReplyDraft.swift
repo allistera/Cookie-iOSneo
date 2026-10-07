@@ -32,12 +32,47 @@ struct ReplyDraft: Equatable, Sendable {
         return "\n\n\(header)\n\(quoted)"
     }
 
-    func request(replyText: String, original: EmailSummary, bodyText: String?) -> SendRequest {
-        SendRequest(
-            recipient: original.fromAddress,
+    func request(replyText: String, original: EmailSummary, bodyText: String?) -> SendRequest? {
+        guard let recipient = original.replyRecipientAddress else { return nil }
+        return SendRequest(
+            recipient: recipient,
             subject: Self.subject(replyingTo: original.subject),
             text: replyText + Self.quotedText(original: original, bodyText: bodyText),
             replyToMessageId: original.id,
             requestId: requestID)
+    }
+}
+
+extension EmailSummary {
+    /// Sent messages are authored by the current user, so replies must target
+    /// the first recipient with a usable address rather than the sender row.
+    var replyRecipientAddress: String? {
+        if isSent {
+            return recipients?.primary?.compactMap(\.trimmedAddress).first
+        }
+        let address = fromAddress.trimmingCharacters(in: .whitespacesAndNewlines)
+        return address.isEmpty ? nil : address
+    }
+
+    var canReply: Bool {
+        replyRecipientAddress != nil
+    }
+
+    /// The human-readable recipient shown in the detail header and composer.
+    var replyRecipientDisplayName: String {
+        guard isSent else {
+            return senderName
+        }
+        guard let recipient = recipients?.primary?.first(where: { $0.trimmedAddress != nil }) else {
+            return String(localized: "No recipient")
+        }
+        return recipient.displayName ?? recipient.trimmedAddress ?? senderName
+    }
+}
+
+extension Recipient {
+    fileprivate var trimmedAddress: String? {
+        let value = address?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return value.isEmpty ? nil : value
     }
 }

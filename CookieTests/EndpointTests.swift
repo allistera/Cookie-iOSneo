@@ -55,4 +55,9 @@ struct EndpointTests {
             CookieAPIEndpoints.tasksRefresh.url?.absoluteString == "https://tasks-api.infinitywave.online/tasks/refresh"
         )
     }
+
+    @Test func refreshEndpointAllowsTheServerItsDocumentedRuntime() {
+        #expect(CookieAPIEndpoints.tasks.timeoutInterval == 60)
+        #expect(CookieAPIEndpoints.tasksRefresh.timeoutInterval == 240)
+    }
 }

@@ -38,13 +38,30 @@ struct APIClient: Sendable {
     private func request<Response: Decodable & Sendable>(
         _ endpoint: Endpoint, method: String, body: Data?
     ) async throws -> Response {
-        guard let url = endpoint.url else { throw APIError.invalidRequest }
+        guard endpoint.url != nil else { throw APIError.invalidRequest }
 
-        var (data, status) = try await send(url, method: method, body: body, token: try await tokens.current())
+        let requestGeneration = await tokens.generation()
+        let currentToken = try await tokens.current()
+        try await ensureCurrentGeneration(requestGeneration)
+        var (data, status) = try await send(
+            endpoint,
+            method: method,
+            body: body,
+            token: currentToken
+        )
+        try await ensureCurrentGeneration(requestGeneration)
         if status == 401 {
-            (data, status) = try await send(url, method: method, body: body, token: try await tokens.renewed())
+            let renewedToken = try await tokens.renewed()
+            try await ensureCurrentGeneration(requestGeneration)
+            (data, status) = try await send(
+                endpoint,
+                method: method,
+                body: body,
+                token: renewedToken
+            )
+            try await ensureCurrentGeneration(requestGeneration)
             if status == 401 {
-                await tokens.invalidate()
+                await tokens.invalidateIfCurrent(requestGeneration)
                 throw APIError.unauthorised
             }
         }
@@ -60,10 +77,12 @@ struct APIClient: Sendable {
         }
     }
 
-    private func send(_ url: URL, method: String, body: Data?, token: String) async throws -> (Data, Int) {
+    private func send(_ endpoint: Endpoint, method: String, body: Data?, token: String) async throws -> (Data, Int) {
+        guard let url = endpoint.url else { throw APIError.invalidRequest }
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.httpBody = body
+        request.timeoutInterval = endpoint.timeoutInterval
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if body != nil {
@@ -83,6 +102,11 @@ struct APIClient: Sendable {
         } catch {
             throw APIError.transport
         }
+    }
+
+    private func ensureCurrentGeneration(_ expected: UInt64) async throws {
+        try Task.checkCancellation()
+        guard await tokens.generation() == expected else { throw CancellationError() }
     }
 }
 

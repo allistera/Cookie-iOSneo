@@ -59,11 +59,15 @@ final class Auth0CredentialsSource: CredentialsSource {
         }
     }
 
-    func clear() {
+    func clear() throws {
         do {
             try manager.clear()
+        } catch let error as SimpleKeychainError where error == .itemNotFound {
+            // Deleting an already absent entry is an idempotent success.
+            return
         } catch {
             Self.logger.error("Clearing credentials failed: \(String(describing: type(of: error)), privacy: .public)")
+            throw error
         }
     }
 

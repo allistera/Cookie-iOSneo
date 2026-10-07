@@ -6,6 +6,7 @@ struct SignInView: View {
     let session: Session
 
     @State private var isSigningIn = false
+    @State private var isRetryingSignOut = false
 
     var body: some View {
         VStack(spacing: 24) {
@@ -25,11 +26,27 @@ struct SignInView: View {
             }
             .accessibilityElement(children: .combine)
             Spacer()
-            if let error = session.signInError {
+            if let error = session.signOutError {
                 Text(error)
                     .font(CookieFont.text(.regular, size: 15, relativeTo: .subheadline))
                     .foregroundStyle(.red)
                     .multilineTextAlignment(.center)
+                    .accessibilityIdentifier("signInError")
+                Button {
+                    isRetryingSignOut = true
+                } label: {
+                    Text("Retry sign out")
+                        .font(CookieFont.text(.semibold, size: 15, relativeTo: .subheadline))
+                }
+                .buttonStyle(.bordered)
+                .disabled(isRetryingSignOut)
+                .accessibilityIdentifier("retrySignOut")
+            } else if let error = session.signInError {
+                Text(error)
+                    .font(CookieFont.text(.regular, size: 15, relativeTo: .subheadline))
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+                    .accessibilityIdentifier("signInError")
             }
             Button {
                 isSigningIn = true
@@ -40,7 +57,8 @@ struct SignInView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .disabled(isSigningIn)
+            .disabled(isSigningIn || isRetryingSignOut)
+            .accessibilityIdentifier("signIn")
         }
         .padding(24)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -49,6 +67,11 @@ struct SignInView: View {
             guard isSigningIn else { return }
             await session.signIn()
             isSigningIn = false
+        }
+        .task(id: isRetryingSignOut) {
+            guard isRetryingSignOut else { return }
+            await session.signOut()
+            isRetryingSignOut = false
         }
     }
 }
@@ -64,7 +87,7 @@ struct SignInView: View {
         func signIn() async throws { throw failure }
         func accessToken() async throws -> String { throw CredentialsFailure.signInRequired }
         func renewedAccessToken() async throws -> String { throw CredentialsFailure.signInRequired }
-        func clear() {}
+        func clear() throws {}
         func endWebSession() async {}
     }
 
