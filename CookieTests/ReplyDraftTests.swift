@@ -39,13 +39,39 @@ struct ReplyDraftTests {
         #expect(blank.isEmpty)
     }
 
-    @Test func requestTargetsOriginalSenderAndKeepsRequestID() {
+    @Test func requestTargetsOriginalSenderAndKeepsRequestID() throws {
         let draft = ReplyDraft(requestID: "req-1")
-        let request = draft.request(replyText: "Thanks", original: original, bodyText: nil)
+        let request = try #require(draft.request(replyText: "Thanks", original: original, bodyText: nil))
         #expect(request.recipient == "jordan@example.com")
         #expect(request.subject == "Re: Final terms")
         #expect(request.text == "Thanks")
         #expect(request.replyToMessageId == "6f1c")
         #expect(request.requestId == "req-1")
+    }
+
+    @Test func sentMessageReplyTargetsFirstRecipientWithAddress() throws {
+        let sent = EmailSummary(
+            id: "sent-1", fromName: "Me", fromAddress: "me@example.com", subject: "Update", snippet: nil,
+            sentAt: original.sentAt, isUnread: false, priority: nil, labels: [], category: nil, isSent: true,
+            recipients: Recipients(primary: [
+                Recipient(name: "Missing address", address: nil),
+                Recipient(name: "Jordan Blake", address: " jordan@example.com "),
+            ]))
+
+        let request = try #require(
+            ReplyDraft(requestID: "req-2").request(replyText: "Thanks", original: sent, bodyText: nil))
+
+        #expect(request.recipient == "jordan@example.com")
+    }
+
+    @Test func sentMessageWithoutRecipientsCannotBeRepliedTo() {
+        let sent = EmailSummary(
+            id: "sent-1", fromName: "Me", fromAddress: "me@example.com", subject: "Update", snippet: nil,
+            sentAt: original.sentAt, isUnread: false, priority: nil, labels: [], category: nil, isSent: true)
+
+        #expect(sent.replyRecipientAddress == nil)
+        #expect(!sent.canReply)
+        #expect(
+            ReplyDraft(requestID: "req-3").request(replyText: "Thanks", original: sent, bodyText: nil) == nil)
     }
 }

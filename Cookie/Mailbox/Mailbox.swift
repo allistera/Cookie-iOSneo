@@ -27,6 +27,8 @@ final class Mailbox {
     private let client: APIClient
     /// Bumped per refresh so a slow response cannot overwrite a newer one.
     @ObservationIgnored private var generation = 0
+    /// Confirmed transitions also cover AI Today references outside the loaded page.
+    @ObservationIgnored private var knownReadStates: [String: Bool] = [:]
 
     init(client: APIClient) {
         self.client = client
@@ -38,6 +40,14 @@ final class Mailbox {
             return InboxTab.tabs(for: emails, categories: categories)
         }
         return [InboxTab(id: "folder", name: folder.title, isImportant: false, emails: emails)]
+    }
+
+    /// Selection only depends on category identities, not on regrouping every row.
+    var tabIDs: [String] {
+        guard folder == .inbox else { return ["folder"] }
+        return [InboxTab.importantID]
+            + categories.filter { !$0.isImportant }.map { "category:\($0.id)" }
+            + [InboxTab.otherID]
     }
 
     /// Switches folder, dropping the previous folder's rows, and loads it.
@@ -67,6 +77,7 @@ final class Mailbox {
             let loadedPage = try await page
             guard current == generation, folder == self.folder else { return }
             emails = loadedPage.emails
+            for email in emails { knownReadStates[email.id] = email.isUnread }
             categories = loadedList?.categories ?? []
             nextCursor = loadedPage.nextCursor
             if let unread = loadedPage.unreadCount { unreadCount = unread }
@@ -95,7 +106,10 @@ final class Mailbox {
             let page: InboxPage = try await client.get(CookieAPIEndpoints.mailbox(folder: folder, before: cursor))
             guard current == generation else { return }
             let known = Set(emails.map(\.id))
-            emails += page.emails.filter { !known.contains($0.id) }
+            var newIDs = known
+            let added = page.emails.filter { newIDs.insert($0.id).inserted }
+            emails += added
+            for email in added { knownReadStates[email.id] = email.isUnread }
             nextCursor = page.nextCursor
         } catch is CancellationError {
             return
@@ -105,9 +119,9 @@ final class Mailbox {
         }
     }
 
-    /// Clears the row's unread flag so tab counts and row weight update at once.
-    func markRead(_ id: String) {
-        setUnread(id, false)
+    /// Applies a confirmed read, including a cited inbox email outside the loaded page.
+    func markRead(_ id: String, wasUnread: Bool? = nil, isInboxMessage: Bool? = nil) {
+        setUnread(id, false, wasUnread: wasUnread, isInboxMessage: isInboxMessage)
     }
 
     /// Restores the unread flag after the server rejected a mark-read.
@@ -115,8 +129,18 @@ final class Mailbox {
         setUnread(id, true)
     }
 
-    private func setUnread(_ id: String, _ isUnread: Bool) {
-        guard let index = emails.firstIndex(where: { $0.id == id }) else { return }
-        emails[index].isUnread = isUnread
+    private func setUnread(
+        _ id: String, _ isUnread: Bool, wasUnread: Bool? = nil, isInboxMessage: Bool? = nil
+    ) {
+        let index = emails.firstIndex(where: { $0.id == id })
+        let previous = knownReadStates[id] ?? index.map { emails[$0].isUnread } ?? wasUnread
+        guard let previous, previous != isUnread else { return }
+        // A response started before this mutation cannot restore stale row flags or counts.
+        generation += 1
+        knownReadStates[id] = isUnread
+        if let index { emails[index].isUnread = isUnread }
+        if isInboxMessage ?? (folder == .inbox) {
+            unreadCount = max(0, unreadCount + (isUnread ? 1 : -1))
+        }
     }
 }

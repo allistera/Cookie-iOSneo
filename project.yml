@@ -63,6 +63,16 @@ targets:
       - path: CookieTests
     dependencies:
       - target: Cookie
+  CookieUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: CookieUITests
+    dependencies:
+      - target: Cookie
+    settings:
+      base:
+        TEST_TARGET_NAME: Cookie
 schemes:
   Cookie:
     build:
@@ -74,5 +84,9 @@ schemes:
       config: Debug
       targets:
         - CookieTests
+        - CookieUITests
+      testPlans:
+        - path: Tests/Cookie.xctestplan
+          defaultPlan: true
     archive:
       config: Release

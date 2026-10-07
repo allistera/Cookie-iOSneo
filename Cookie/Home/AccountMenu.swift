@@ -24,6 +24,7 @@ struct AccountMenu: View {
                 .overlay(Circle().strokeBorder(Color(.avatarRing), lineWidth: 2))
         }
         .accessibilityLabel("Account")
+        .accessibilityIdentifier("accountMenu")
     }
 
     private var signOutButton: some View {

@@ -1,0 +1,29 @@
+{
+  "configurations": [
+    {
+      "id": "6CD8CA71-B690-4444-8729-A134B032DF51",
+      "name": "Default",
+      "options": {}
+    }
+  ],
+  "defaultOptions": {},
+  "testTargets": [
+    {
+      "parallelizable": true,
+      "target": {
+        "containerPath": "container:Cookie.xcodeproj",
+        "identifier": "E0D0ED8BBE6AF1D097AE99CC",
+        "name": "CookieTests"
+      }
+    },
+    {
+      "parallelizable": false,
+      "target": {
+        "containerPath": "container:Cookie.xcodeproj",
+        "identifier": "76E6D857185C65A52633A8F9",
+        "name": "CookieUITests"
+      }
+    }
+  ],
+  "version": 1
+}

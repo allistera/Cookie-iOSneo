@@ -58,6 +58,7 @@ jobs:
           xcodebuild test \
             -project Cookie.xcodeproj \
             -scheme Cookie \
+            -testPlan Cookie \
             -destination 'platform=iOS Simulator,name=iPhone 18 Pro,OS=27.0' \
             -resultBundlePath TestResults.xcresult \
             -onlyUsePackageVersionsFromResolvedFile \

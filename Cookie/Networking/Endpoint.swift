@@ -5,6 +5,20 @@ struct Endpoint: Equatable, Sendable {
     let host: String
     let path: String
     var queryItems: [URLQueryItem] = []
+    /// Maximum time allowed for a request to this endpoint.
+    let timeoutInterval: TimeInterval
+
+    init(
+        host: String,
+        path: String,
+        queryItems: [URLQueryItem] = [],
+        timeoutInterval: TimeInterval = 60
+    ) {
+        self.host = host
+        self.path = path
+        self.queryItems = queryItems
+        self.timeoutInterval = timeoutInterval
+    }
 
     /// `nil` when the host and path cannot form a URL, for example a path
     /// without a leading slash.
@@ -34,7 +48,11 @@ enum CookieAPIEndpoints {
     static let labels = Endpoint(host: "labels-api.infinitywave.online", path: "/labels")
     static let drafts = Endpoint(host: "drafts-api.infinitywave.online", path: "/drafts")
     static let tasks = Endpoint(host: "tasks-api.infinitywave.online", path: "/tasks")
-    static let tasksRefresh = Endpoint(host: "tasks-api.infinitywave.online", path: "/tasks/refresh")
+    static let tasksRefresh = Endpoint(
+        host: "tasks-api.infinitywave.online",
+        path: "/tasks/refresh",
+        timeoutInterval: 240
+    )
 
     /// One folder's rows, newest first. `cursor` is the previous page's `nextCursor`.
     static func mailbox(folder: MailboxFolder, before cursor: String?, limit: Int = 50) -> Endpoint {

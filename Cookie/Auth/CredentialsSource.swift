@@ -23,7 +23,10 @@ protocol CredentialsSource: AnyObject {
     /// An access token from a forced renewal.
     func renewedAccessToken() async throws -> String
     /// Removes stored credentials from this device.
-    func clear()
+    ///
+    /// A failure is surfaced so the caller can keep a durable signed-out
+    /// marker and avoid restoring credentials that may still be present.
+    func clear() throws
     /// Ends the provider's browser session. Best effort.
     func endWebSession() async
 }

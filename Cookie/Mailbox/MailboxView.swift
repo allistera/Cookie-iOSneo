@@ -10,7 +10,7 @@ struct MailboxView: View {
             .task {
                 await mailbox.refresh()
             }
-            .onChange(of: mailbox.tabs.map(\.id)) { _, ids in
+            .onChange(of: mailbox.tabIDs) { _, ids in
                 if !ids.contains(selection), let first = ids.first {
                     selection = first
                 }
