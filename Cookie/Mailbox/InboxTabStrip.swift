@@ -53,6 +53,7 @@ struct InboxTabStrip: View {
             .padding(.vertical, 6)
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("mailbox-tab-\(tab.id)")
         .foregroundStyle(selected ? Color(.primaryText) : Color(.muted))
         .accessibilityAddTraits(selected ? [.isSelected] : [])
         .accessibilityValue(tab.unreadCount > 0 ? Text("\(tab.unreadCount) unread") : Text(verbatim: ""))

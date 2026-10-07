@@ -42,7 +42,7 @@ struct DrawerContainer<Sidebar: View, Content: View>: View {
                     }
                     .offset(x: offset)
                     .accessibilityHidden(isOpen)
-                    .gesture(closeDrag, including: isOpen ? .all : .none)
+                    .gesture(closeDrag, including: isOpen ? .all : .subviews)
             }
             .animation(reduceMotion ? nil : .default, value: isOpen)
             .onKeyPress(.escape) {

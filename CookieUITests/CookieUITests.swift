@@ -30,6 +30,19 @@ final class CookieUITests: XCTestCase {
         XCTAssertTrue(signIn.waitForExistence(timeout: 5))
     }
 
+    func testClosedDrawerKeepsTabsAndSidebarInteractive() {
+        let app = launch()
+        let other = app.buttons["mailbox-tab-other"]
+        XCTAssertTrue(other.waitForExistence(timeout: 5))
+        other.tap()
+        XCTAssertTrue(other.isSelected)
+        let important = app.buttons["mailbox-tab-important"]
+        important.tap()
+        XCTAssertTrue(important.isSelected)
+        select("Sent", in: app)
+        XCTAssertTrue(app.descendants(matching: .any)["message-fixture-sent"].waitForExistence(timeout: 5))
+    }
+
     func testReaderShowsRemoteContentActionAndSendsReply() {
         let app = launch()
         let message = app.descendants(matching: .any)["message-fixture-message"]
