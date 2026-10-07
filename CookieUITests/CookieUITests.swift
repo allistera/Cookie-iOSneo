@@ -51,9 +51,7 @@ final class CookieUITests: XCTestCase {
 
         let showContent = app.buttons["showRemoteContent"]
         XCTAssertTrue(showContent.waitForExistence(timeout: 5))
-        let body = app.webViews.firstMatch
-        XCTAssertTrue(body.waitForExistence(timeout: 5))
-        XCTAssertTrue(body.staticTexts["Fixture body visible."].waitForExistence(timeout: 5))
+        waitForRenderedBody(in: app)
         let reply = app.buttons["toggleReply"]
         XCTAssertTrue(reply.waitForExistence(timeout: 5))
         reply.tap()
@@ -111,7 +109,7 @@ final class CookieUITests: XCTestCase {
         let showContent = app.buttons["showRemoteContent"]
         XCTAssertTrue(showContent.waitForExistence(timeout: 5))
         XCTAssertTrue(showContent.isHittable)
-        XCTAssertTrue(app.webViews.firstMatch.staticTexts["Fixture body visible."].waitForExistence(timeout: 5))
+        waitForRenderedBody(in: app)
         let reply = app.buttons["toggleReply"]
         XCTAssertTrue(reply.waitForExistence(timeout: 5))
         let reader = app.scrollViews["readerScroll"]
@@ -122,6 +120,13 @@ final class CookieUITests: XCTestCase {
         }
         XCTAssertTrue(reply.frame.minY >= reader.frame.minY && reply.frame.maxY <= reader.frame.maxY)
         XCTAssertTrue(reply.isHittable)
+    }
+
+    /// The body renders in WebKit's own process, which starts cold with every
+    /// launch, so it reaches the accessibility tree seconds after native views.
+    private func waitForRenderedBody(in app: XCUIApplication) {
+        let body = app.webViews.firstMatch.staticTexts["Fixture body visible."]
+        XCTAssertTrue(body.waitForExistence(timeout: 20))
     }
 
     private func select(_ folder: String, in app: XCUIApplication) {
