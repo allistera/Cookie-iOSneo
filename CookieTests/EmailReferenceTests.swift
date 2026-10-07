@@ -28,12 +28,16 @@ private actor URLLog {
 struct EmailReferenceTests {
     @Test func resolvesMetadataFromLaterInboxPageWithoutRefetchingBody() async throws {
         let responses = PageResponses([
-            #"{"emails":[{"id":"other","from_name":"Other","from_address":"other@example.com", "#
-                + #"subject":"Other", "sent_at":"2026-10-05T09:00:00Z", "is_unread":false,"labels":[]}],"#
-                + #"nextCursor":"cursor-1"}"#,
-            #"{"emails":[{"id":"target","from_name":"Jordan Blake","from_address":"jordan@example.com", "#
-                + #"subject":"Final terms", "snippet":"Please review.", "sent_at":"2026-10-05T09:48:12Z", "#
-                + #"is_unread":true,"labels":[]}],"nextCursor":null}"#,
+            """
+            {"emails":[{"id":"other","from_name":"Other","from_address":"other@example.com",
+            "subject":"Other","sent_at":"2026-10-05T09:00:00Z","is_unread":false,"labels":[]}],
+            "nextCursor":"cursor-1"}
+            """,
+            """
+            {"emails":[{"id":"target","from_name":"Jordan Blake","from_address":"jordan@example.com",
+            "subject":"Final terms","snippet":"Please review.","sent_at":"2026-10-05T09:48:12Z",
+            "is_unread":true,"labels":[]}],"nextCursor":null}
+            """,
         ])
         let log = URLLog()
         let tokens = TokenProvider(current: { "t" }, renewed: { "t" }, invalidate: {})

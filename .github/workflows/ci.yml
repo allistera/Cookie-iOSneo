@@ -53,6 +53,8 @@ jobs:
         run: scripts/ci/setup.sh
       - name: Generate project
         run: xcodegen generate
+      - name: Prepare simulator
+        run: scripts/ci/prepare-simulator.sh
       - name: Test
         run: |
           xcodebuild test \

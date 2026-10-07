@@ -55,6 +55,7 @@ struct EmailDetailView: View {
                 Spacer(minLength: 48)
             }
         }
+        .accessibilityIdentifier("readerScroll")
         .background(Color(.surface))
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)

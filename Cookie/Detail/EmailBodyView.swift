@@ -215,9 +215,12 @@ struct EmailBodyView: UIViewRepresentable {
                 <meta name="viewport" content="width=device-width, initial-scale=1">\
                 \(contentSecurityPolicy)\
                 <style>\
-                @font-face { font-family: "Figtree"; font-weight: 400; src: url("Figtree-Regular.ttf"); }\
-                @font-face { font-family: "Figtree"; font-weight: 600; src: url("Figtree-SemiBold.ttf"); }\
-                @font-face { font-family: "Figtree"; font-weight: 700; src: url("Figtree-Bold.ttf"); }\
+                @font-face { font-family: "Figtree"; font-weight: 400; font-display: swap;\
+                src: url("Figtree-Regular.ttf"); }\
+                @font-face { font-family: "Figtree"; font-weight: 600; font-display: swap;\
+                src: url("Figtree-SemiBold.ttf"); }\
+                @font-face { font-family: "Figtree"; font-weight: 700; font-display: swap;\
+                src: url("Figtree-Bold.ttf"); }\
                 :root { color-scheme: light dark; }\
                 body { margin: 0; padding: 0; background: transparent;\
                 font-family: "Figtree", -apple-system, sans-serif !important;\

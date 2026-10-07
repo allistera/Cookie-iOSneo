@@ -51,7 +51,9 @@ final class CookieUITests: XCTestCase {
 
         let showContent = app.buttons["showRemoteContent"]
         XCTAssertTrue(showContent.waitForExistence(timeout: 5))
-        XCTAssertTrue(app.webViews.firstMatch.waitForExistence(timeout: 5))
+        let body = app.webViews.firstMatch
+        XCTAssertTrue(body.waitForExistence(timeout: 5))
+        XCTAssertTrue(body.staticTexts["Fixture body visible."].waitForExistence(timeout: 5))
         let reply = app.buttons["toggleReply"]
         XCTAssertTrue(reply.waitForExistence(timeout: 5))
         reply.tap()
@@ -109,9 +111,16 @@ final class CookieUITests: XCTestCase {
         let showContent = app.buttons["showRemoteContent"]
         XCTAssertTrue(showContent.waitForExistence(timeout: 5))
         XCTAssertTrue(showContent.isHittable)
-        app.swipeUp()
+        XCTAssertTrue(app.webViews.firstMatch.staticTexts["Fixture body visible."].waitForExistence(timeout: 5))
         let reply = app.buttons["toggleReply"]
         XCTAssertTrue(reply.waitForExistence(timeout: 5))
+        let reader = app.scrollViews["readerScroll"]
+        for _ in 0..<5 {
+            let frame = reply.frame
+            if frame.minY >= reader.frame.minY, frame.maxY <= reader.frame.maxY { break }
+            reader.swipeUp()
+        }
+        XCTAssertTrue(reply.frame.minY >= reader.frame.minY && reply.frame.maxY <= reader.frame.maxY)
         XCTAssertTrue(reply.isHittable)
     }
 

@@ -56,6 +56,13 @@ private final class NavigationFinishDelegate: NSObject, WKNavigationDelegate {
         coordinator?.webView(webView, didFailProvisionalNavigation: navigation, withError: error)
         finish(.failure(error))
     }
+
+    func webView(
+        _ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction
+    ) async -> WKNavigationActionPolicy {
+        guard let coordinator else { return .allow }
+        return await coordinator.webView(webView, decidePolicyFor: navigationAction)
+    }
 }
 
 @MainActor
@@ -73,7 +80,7 @@ struct EmailBodyViewTests {
         // WebKit's computed style. The production reader configuration remains disabled.
         let configuration = EmailBodyView.makeConfiguration()
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
-        let webView = WKWebView(frame: .zero, configuration: configuration)
+        let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 400, height: 400), configuration: configuration)
         let coordinator = EmailBodyView.Coordinator(contentHeight: .constant(0))
         let delegate = NavigationFinishDelegate(coordinator: coordinator)
         defer { coordinator.teardown(webView) }
@@ -107,25 +114,38 @@ struct EmailBodyViewTests {
     }
 
     @Test(.timeLimit(.minutes(1))) func senderScriptDoesNotExecuteInReaderWebView() async {
-        let webView = WKWebView(frame: .zero, configuration: EmailBodyView.makeConfiguration())
-        let delegate = NavigationFinishDelegate()
+        let webView = WKWebView(
+            frame: CGRect(x: 0, y: 0, width: 400, height: 400), configuration: EmailBodyView.makeConfiguration())
+        let coordinator = EmailBodyView.Coordinator(contentHeight: .constant(0))
+        let delegate = NavigationFinishDelegate(coordinator: coordinator)
         defer {
-            webView.stopLoading()
-            webView.navigationDelegate = nil
+            coordinator.teardown(webView)
         }
         webView.navigationDelegate = delegate
-        webView.loadHTMLString(
-            #"<html><head><title>safe</title>"#
-                + #"<script>document.title = "executed"</script></head><body>Message</body></html>"#,
-            baseURL: nil)
+        coordinator.load(
+            html: #"<p id="fixture-body">Fixture body visible.</p>"#
+                + #"<script>document.getElementById("fixture-body").textContent = "executed"</script>"#,
+            blocksRemoteContent: false, baseFontSize: 17, into: webView)
 
         let completion = await delegate.waitForCompletion()
 
-        #expect(
-            {
-                if case .success = completion { return true }
-                return false
-            }())
-        #expect(webView.title == "safe")
+        guard case .success = completion else {
+            if case .failure(let error) = completion {
+                Issue.record("reader document failed to load: \(error)")
+            }
+            return
+        }
+
+        let result: Any?
+        do {
+            result = try await webView.evaluateJavaScript(
+                "document.getElementById('fixture-body')?.textContent ?? ''",
+                in: nil,
+                contentWorld: .defaultClient)
+        } catch {
+            Issue.record("could not inspect rendered reader body: \(error)")
+            return
+        }
+        #expect(result as? String == "Fixture body visible.")
     }
 }
