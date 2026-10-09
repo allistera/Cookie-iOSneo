@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// One category page: its rows, then Load more or the category's footer line.
+/// One category page: its rows, then Load more; an empty page shows the category's footer line instead.
 struct InboxPageView: View {
     let tab: InboxTab
     let mailbox: Mailbox
@@ -47,12 +47,14 @@ struct InboxPageView: View {
                 }
                 .buttonStyle(.bordered)
                 .disabled(mailbox.isLoadingMore)
-            } else if tab.isImportant {
-                Text("That's everything important. Cookie's watching the rest.")
-                    .foregroundStyle(Color(.secondaryText))
-            } else {
-                Text("You're all caught up.")
-                    .foregroundStyle(Color(.secondaryText))
+            } else if tab.emails.isEmpty {
+                if tab.isImportant {
+                    Text("That's everything important. Cookie's watching the rest.")
+                        .foregroundStyle(Color(.secondaryText))
+                } else {
+                    Text("You're all caught up.")
+                        .foregroundStyle(Color(.secondaryText))
+                }
             }
         }
         .font(CookieFont.text(.regular, size: 14, relativeTo: .footnote))

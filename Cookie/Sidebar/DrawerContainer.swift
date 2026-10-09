@@ -10,18 +10,36 @@ struct DrawerContainer<Sidebar: View, Content: View>: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var dragOffset: CGFloat = 0
+    @State private var metrics = Metrics()
+
+    /// The container's safe-area width and insets, measured by a probe that
+    /// stays inside the safe area while the drawer itself ignores it.
+    private struct Metrics: Equatable {
+        var width: CGFloat = 0
+        var safeArea = EdgeInsets()
+    }
 
     /// 320pt, or the width minus a 48pt reveal of the content on narrow screens.
     static func width(for containerWidth: CGFloat) -> CGFloat {
-        min(320, containerWidth - 48)
+        max(0, min(320, containerWidth - 48))
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            let drawerWidth = Self.width(for: geometry.size.width)
-            let offset = isOpen ? max(0, drawerWidth + dragOffset) : 0
+        let drawerWidth = Self.width(for: metrics.width)
+        let offset = isOpen ? max(0, drawerWidth + dragOffset) : 0
+        ZStack {
+            Color.clear
+                .onGeometryChange(for: Metrics.self) { proxy in
+                    Metrics(width: proxy.size.width, safeArea: proxy.safeAreaInsets)
+                } action: { measured in
+                    metrics = measured
+                }
+            // The drawer ignores the safe area so the content's background and
+            // clip reach the status bar and home indicator. The content's
+            // NavigationStack insets itself; the sidebar is inset explicitly.
             ZStack(alignment: .leading) {
                 sidebar()
+                    .safeAreaPadding(metrics.safeArea)
                     .frame(width: drawerWidth)
                     .accessibilityHidden(!isOpen)
                     .accessibilityAddTraits(.isModal)
@@ -44,6 +62,7 @@ struct DrawerContainer<Sidebar: View, Content: View>: View {
                     .offset(x: offset)
                     .accessibilityHidden(isOpen)
             }
+            .ignoresSafeArea()
             .animation(reduceMotion ? nil : .default, value: isOpen)
             .onKeyPress(.escape) {
                 guard isOpen else { return .ignored }
